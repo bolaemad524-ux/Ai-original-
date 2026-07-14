@@ -138,7 +138,6 @@
             <div id="socialLinksContainer" class="p-6 grid grid-cols-1 gap-3 text-center">
                 <a id="btnPhone" href="#" class="bg-gray-100 text-gray-800 p-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-200"><i data-lucide="phone" class="w-5 h-5 text-blue-600"></i> اتصال هاتفي</a>
                 <a id="btnWhatsapp" href="#" class="bg-green-50 text-green-700 p-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-100"><i data-lucide="message-circle" class="w-5 h-5 text-green-500"></i> واتساب</a>
-                <a id="btnFacebook" href="#" class="bg-blue-50 text-blue-700 p-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-100"><i data-lucide="facebook" class="w-5 h-5 text-blue-600"></i> فيسبوك</a>
             </div>
         </div>
     </div>
@@ -156,7 +155,6 @@
             
             <div class="overflow-y-auto p-5 scrollbar-thin">
                 <div id="loginForm" class="space-y-4 py-4">
-                    <!-- حقل الرقم السري فقط -->
                     <input type="password" id="adminPassword" class="w-full text-center text-xl tracking-[0.2em] p-4 border-2 rounded-xl outline-none focus:border-blue-500 transition" placeholder="الرقم السري للإدارة">
                     <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 shadow-lg active:scale-95 transition mt-2">دخول</button>
                 </div>
@@ -358,7 +356,7 @@
         let sales = [];
         let expenses = [];
         let settings = { 
-            whatsapp: '201000000000', phone: '', facebook: '',
+            whatsapp: '201000000000', phone: '',
             storeName: 'Al Original قطع غيار سيارات', storeDesc: 'متخصصين في هيونداي فيرنا',
             categories: ['فلاتر وسيور', 'عفشة ومساعدين', 'فوانيس ولمبات', 'زيوت وتشحيم']
         };
@@ -430,6 +428,44 @@
             container.appendChild(toast); setTimeout(() => toast.remove(), 3000);
         }
 
+        // أداة لضغط الصور قبل رفعها لحل مشكلة فشل الحفظ
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const MAX_SIZE = 600; // تصغير المقاس للحفاظ على مساحة Firebase
+                    if (width > height && width > MAX_SIZE) {
+                        height *= MAX_SIZE / width;
+                        width = MAX_SIZE;
+                    } else if (height > MAX_SIZE) {
+                        width *= MAX_SIZE / height;
+                        height = MAX_SIZE;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const mimeType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+                    const quality = mimeType === 'image/jpeg' ? 0.7 : undefined;
+                    callback(canvas.toDataURL(mimeType, quality));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function populateSettingsInputs() {
+            document.getElementById('linkWhatsapp').value = settings.whatsapp || '';
+            document.getElementById('linkPhone').value = settings.phone || '';
+            document.getElementById('settingStoreName').value = settings.storeName || '';
+            document.getElementById('settingStoreDesc').value = settings.storeDesc || '';
+        }
+
         function toggleModal(id) {
             const modal = document.getElementById(id);
             modal.classList.toggle('hidden');
@@ -440,6 +476,7 @@
                     document.getElementById('adminDashboard').classList.remove('hidden');
                     document.getElementById('btnLogout').classList.remove('hidden');
                     populateCategories();
+                    populateSettingsInputs(); // وضع البيانات لتجنب مسحها
                     switchAdminTab('inventory');
                 } else {
                     document.getElementById('loginForm').classList.remove('hidden');
@@ -540,7 +577,7 @@
 
         function handleLogin() {
             const pass = document.getElementById('adminPassword').value;
-            const hiddenEmail = 'admin@aloriginal.com'; // الإيميل المخفي في الكود
+            const hiddenEmail = 'admin@aloriginal.com';
             
             if(!pass) { showToast('يرجى إدخال الرقم السري'); return; }
             
@@ -551,12 +588,8 @@
                     document.getElementById('btnLogout').classList.remove('hidden');
                     
                     populateCategories(); 
+                    populateSettingsInputs();
                     switchAdminTab('inventory');
-                    
-                    document.getElementById('linkWhatsapp').value = settings.whatsapp || '';
-                    document.getElementById('linkPhone').value = settings.phone || '';
-                    document.getElementById('settingStoreName').value = settings.storeName || '';
-                    document.getElementById('settingStoreDesc').value = settings.storeDesc || '';
                     
                     showToast('تم تسجيل الدخول بنجاح');
                 })
@@ -598,14 +631,12 @@
         function handleImageUpload(e) {
             const file = e.target.files[0];
             if(file) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    tempBase64Image = e.target.result;
+                compressImage(file, (base64) => {
+                    tempBase64Image = base64;
                     document.getElementById('prodImagePreview').src = tempBase64Image;
                     document.getElementById('prodImagePreview').classList.remove('hidden');
                     document.getElementById('prodImagePlaceholder').classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
+                });
             }
         }
 
@@ -622,13 +653,13 @@
             const prodData = { name, category, buyPrice, price: sellPrice, stock, image: tempBase64Image || 'https://via.placeholder.com/150' };
 
             if(id) {
-                db.collection('products').doc(id).update(prodData).then(() => {
-                    resetForm(); showToast('تم التحديث في Firebase');
-                });
+                db.collection('products').doc(id).update(prodData)
+                  .then(() => { resetForm(); showToast('تم التحديث في القاعدة'); })
+                  .catch(err => alert('خطأ في التحديث: ' + err.message));
             } else {
-                db.collection('products').add(prodData).then(() => {
-                    resetForm(); showToast('تمت الإضافة إلى Firebase');
-                });
+                db.collection('products').add(prodData)
+                  .then(() => { resetForm(); showToast('تمت الإضافة بنجاح'); })
+                  .catch(err => alert('خطأ في الإضافة: ' + err.message));
             }
         }
 
@@ -653,13 +684,16 @@
             const qty = prompt(`كم عدد القطع التي تريد سحبها من ( ${p.name} )؟\nالمخزون الحالي: ${p.stock}`);
             if(qty !== null && !isNaN(qty) && qty > 0) {
                 db.collection('products').doc(id).update({ stock: p.stock - parseFloat(qty) })
-                  .then(() => showToast('تم سحب الكمية من قاعدة البيانات'));
+                  .then(() => showToast('تم السحب'))
+                  .catch(err => alert('خطأ: ' + err.message));
             }
         }
 
         function deleteProduct(id) {
             if(confirm('متأكد من الحذف نهائياً؟')) {
-                db.collection('products').doc(id).delete().then(() => showToast('تم الحذف'));
+                db.collection('products').doc(id).delete()
+                  .then(() => showToast('تم الحذف'))
+                  .catch(err => alert('خطأ: ' + err.message));
             }
         }
 
@@ -799,9 +833,9 @@
             batch.commit().then(() => {
                 adminPosCart = []; document.getElementById('customerName').value = '';
                 renderPosCart();
-                showToast('تمت العملية وحفظها بقاعدة البيانات');
+                showToast('تمت العملية وحفظها بنجاح');
             }).catch(err => {
-                console.error(err); showToast('حدث خطأ أثناء الحفظ');
+                alert('خطأ في العملية: ' + err.message);
             });
         }
 
@@ -837,13 +871,16 @@
                 db.collection('expenses').add({ desc, amount: amt, date: new Date().toISOString() })
                   .then(() => {
                       document.getElementById('expenseDesc').value = ''; document.getElementById('expenseAmount').value = '';
-                      showToast('تمت إضافة المصروف لـ Firebase');
-                  });
+                      showToast('تم إضافة المصروف');
+                  })
+                  .catch(err => alert('خطأ: ' + err.message));
             }
         }
         function deleteExpense(id) {
             if(confirm('حذف هذا المصروف؟')) {
-                db.collection('expenses').doc(id).delete().then(() => showToast('تم الحذف'));
+                db.collection('expenses').doc(id).delete()
+                  .then(() => showToast('تم الحذف'))
+                  .catch(err => alert('خطأ: ' + err.message));
             }
         }
 
@@ -856,7 +893,8 @@
                   .then(() => {
                       document.getElementById('newCategoryName').value = '';
                       showToast('تم إضافة القسم');
-                  });
+                  })
+                  .catch(err => alert('خطأ: ' + err.message));
             }
         }
 
@@ -873,24 +911,27 @@
                 const updatedCategories = [...settings.categories];
                 updatedCategories.splice(index, 1);
                 db.collection('store_data').doc('settings').set({ categories: updatedCategories }, { merge: true })
-                  .then(() => showToast('تم حذف القسم'));
+                  .then(() => showToast('تم الحذف'))
+                  .catch(err => alert('خطأ: ' + err.message));
             }
         }
 
         function handleLogoUpload(e) {
             const file = e.target.files[0];
             if(file) {
-                const reader = new FileReader();
-                reader.onload = e => { tempLogoBase64 = e.target.result; showToast('تم اختيار اللوجو (اضغط حفظ)'); };
-                reader.readAsDataURL(file);
+                compressImage(file, (base64) => { 
+                    tempLogoBase64 = base64; 
+                    showToast('تم اختيار اللوجو (اضغط حفظ الإعدادات)'); 
+                });
             }
         }
         function handleHeaderLogoUpload(e) {
             const file = e.target.files[0];
             if(file) {
-                const reader = new FileReader();
-                reader.onload = e => { tempHeaderLogoBase64 = e.target.result; showToast('تم اختيار اللوجو العلوي (اضغط حفظ)'); };
-                reader.readAsDataURL(file);
+                compressImage(file, (base64) => { 
+                    tempHeaderLogoBase64 = base64; 
+                    showToast('تم اختيار اللوجو العلوي (اضغط حفظ الإعدادات)'); 
+                });
             }
         }
 
@@ -906,7 +947,8 @@
             if (tempHeaderLogoBase64) updatedSettings.headerLogo = tempHeaderLogoBase64;
 
             db.collection('store_data').doc('settings').set(updatedSettings, { merge: true })
-              .then(() => showToast('تم حفظ الإعدادات في Firebase'));
+              .then(() => showToast('تم حفظ الإعدادات بنجاح'))
+              .catch(err => alert('خطأ في الحفظ: ' + err.message));
         }
 
         function applySettings() {
