@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
@@ -45,6 +46,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800 pb-24 md:pb-0 select-none">
 
+    <!-- Splash Screen -->
     <div id="splashScreen">
         <div class="sparkles"></div>
         <div class="relative z-10 flex flex-col items-center px-4">
@@ -58,6 +60,7 @@
 
     <div id="toastContainer"></div>
 
+    <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-20">
         <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
             <div id="adminTrigger" class="flex items-center gap-2 cursor-pointer active:scale-95 transition select-none p-1" onclick="handleAdminTrigger()">
@@ -75,6 +78,7 @@
     </header>
 
     <main class="max-w-md mx-auto p-4 space-y-6">
+        <!-- Logo Section -->
         <section class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 text-center space-y-4 relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 to-blue-600"></div>
             <div class="relative mx-auto w-32 h-32 bg-gray-50 rounded-full flex items-center justify-center overflow-hidden border-[6px] border-white shadow-lg ring-1 ring-gray-100">
@@ -87,18 +91,7 @@
             </div>
         </section>
 
-        <section id="dealSection" class="hidden relative overflow-hidden bg-gradient-to-br from-yellow-500 to-orange-600 rounded-3xl shadow-lg text-white">
-            <div class="deal-shine"></div>
-            <div class="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-4 py-1 rounded-bl-xl z-10 shadow-sm">🔥 عرض اليوم</div>
-            <div id="dealContent" class="p-6 pt-8 flex items-center gap-4">
-                <div class="flex-1">
-                    <h3 id="displayDealTitle" class="font-bold text-lg">خصم خاص</h3>
-                    <p id="displayDealDesc" class="text-sm opacity-90 mt-1">لفترة محدودة فقط</p>
-                </div>
-                <div class="bg-white/20 p-3 rounded-xl"><i data-lucide="percent" class="w-8 h-8"></i></div>
-            </div>
-        </section>
-
+        <!-- Search & Categories Section -->
         <section class="space-y-3">
             <div class="relative">
                 <i data-lucide="search" class="absolute right-4 top-3.5 w-5 h-5 text-gray-400"></i>
@@ -107,11 +100,13 @@
             <div class="flex overflow-x-auto gap-2 pb-2 scrollbar-hide px-1" id="userCategoriesList"></div>
         </section>
 
+        <!-- Products List -->
         <section class="space-y-4 min-h-[200px]">
             <h3 class="font-bold text-lg text-gray-800 px-2 flex items-center gap-2"><i data-lucide="grid" class="w-5 h-5 text-blue-600"></i> <span id="displayProductsTitle">أحدث المنتجات</span></h3>
             <div id="productsGrid" class="grid grid-cols-2 gap-3"></div>
         </section>
 
+        <!-- Cart Panel (Customer) -->
         <section id="cartPanel" class="hidden bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden ring-2 ring-blue-500 mb-6 transition-all fade-in-up">
             <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
                 <h3 class="font-bold text-gray-800 flex items-center gap-2"><i data-lucide="shopping-cart" class="w-5 h-5 text-blue-600"></i> الطلب الخاص بك</h3>
@@ -128,10 +123,12 @@
         </section>
     </main>
 
+    <!-- Floating Cart Button -->
     <div id="floatingCart" class="hidden fixed bottom-6 left-6 z-30 md:hidden">
         <button onclick="toggleCart(); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })" class="bg-blue-600 text-white p-4 rounded-full shadow-2xl flex items-center gap-2 animate-bounce border-4 border-white"><i data-lucide="shopping-cart" class="w-6 h-6"></i><span class="font-bold"><span id="floatingTotal">0</span> ج</span></button>
     </div>
 
+    <!-- Contact Modal -->
     <div id="contactModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden fade-in-up">
             <div class="bg-gradient-to-l from-blue-500 to-blue-700 p-6 text-white text-center relative">
@@ -146,6 +143,7 @@
         </div>
     </div>
 
+    <!-- Admin Modal -->
     <div id="adminModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden relative fade-in-up">
             <div class="bg-gray-50 p-4 flex justify-between items-center border-b shrink-0 rounded-t-3xl">
@@ -158,12 +156,13 @@
             
             <div class="overflow-y-auto p-5 scrollbar-thin">
                 <div id="loginForm" class="space-y-4 py-4">
-                    <input type="email" id="adminEmail" class="w-full text-center p-3 border-2 rounded-xl outline-none focus:border-blue-500 transition" placeholder="البريد الإلكتروني (الإدارة)">
-                    <input type="password" id="adminPassword" class="w-full text-center tracking-[0.2em] p-3 border-2 rounded-xl outline-none focus:border-blue-500 transition" placeholder="كلمة المرور">
-                    <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 shadow-lg active:scale-95 transition mt-2">تسجيل الدخول</button>
+                    <!-- حقل الرقم السري فقط -->
+                    <input type="password" id="adminPassword" class="w-full text-center text-xl tracking-[0.2em] p-4 border-2 rounded-xl outline-none focus:border-blue-500 transition" placeholder="الرقم السري للإدارة">
+                    <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 shadow-lg active:scale-95 transition mt-2">دخول</button>
                 </div>
                 
                 <div id="adminDashboard" class="hidden space-y-4">
+                    <!-- Admin Tabs Navigation -->
                     <div class="flex gap-2 bg-gray-100 p-1 rounded-xl overflow-x-auto scrollbar-hide">
                         <button onclick="switchAdminTab('inventory')" id="btnTabInventory" class="admin-tab-btn flex-1 whitespace-nowrap bg-white text-blue-600 font-bold px-4 py-2 rounded-lg shadow-sm text-sm transition">المخزن</button>
                         <button onclick="switchAdminTab('pos')" id="btnTabPos" class="admin-tab-btn flex-1 whitespace-nowrap text-gray-600 font-bold px-4 py-2 rounded-lg text-sm transition hover:bg-gray-200">قسم البيع</button>
@@ -171,6 +170,7 @@
                         <button onclick="switchAdminTab('settings')" id="btnTabSettings" class="admin-tab-btn flex-1 whitespace-nowrap text-gray-600 font-bold px-4 py-2 rounded-lg text-sm transition hover:bg-gray-200">الإعدادات</button>
                     </div>
 
+                    <!-- TAB 1: Inventory (المخزن) -->
                     <div id="tab-inventory" class="admin-tab space-y-4">
                         <div class="bg-gray-50 p-4 rounded-xl border space-y-3">
                             <h4 id="formHeader" class="font-bold text-sm text-gray-700 border-b pb-2 mb-2 flex items-center gap-2"><i data-lucide="plus-circle" class="w-4 h-4 text-green-600"></i> إضافة صنف للمخزن</h4>
@@ -218,6 +218,7 @@
                         </div>
                     </div>
 
+                    <!-- TAB 2: POS (قسم البيع) -->
                     <div id="tab-pos" class="admin-tab hidden space-y-4">
                         <div class="bg-blue-50 border border-blue-100 p-3 rounded-xl">
                             <h4 class="font-bold text-sm text-blue-800 mb-2">أضف للفاتورة</h4>
@@ -270,6 +271,7 @@
                         </div>
                     </div>
 
+                    <!-- TAB 3: Accounting & Expenses (الحسابات والمصروفات) -->
                     <div id="tab-accounting" class="admin-tab hidden space-y-4">
                         <div class="grid grid-cols-2 gap-3">
                             <div class="bg-blue-600 text-white p-3 rounded-xl shadow">
@@ -301,6 +303,7 @@
                         </div>
                     </div>
 
+                    <!-- TAB 4: Settings (الإعدادات) -->
                     <div id="tab-settings" class="admin-tab hidden space-y-4 bg-gray-50 p-4 rounded-xl border">
                         <div class="bg-white p-2 rounded border space-y-2">
                             <h5 class="text-xs font-bold text-gray-500">إدارة الأقسام</h5>
@@ -366,7 +369,6 @@
         let currentSearchQuery = '';
         let currentCategory = '';
         
-        // Listeners for protected data (Sales/Expenses)
         let salesUnsubscribe = null;
         let expensesUnsubscribe = null;
 
@@ -385,7 +387,6 @@
 
         // --- Firebase Listeners ---
         function initPublicListeners() {
-            // Settings and Products are public to read
             db.collection('store_data').doc('settings').onSnapshot(doc => {
                 if (doc.exists) {
                     settings = { ...settings, ...doc.data() };
@@ -405,7 +406,6 @@
         function monitorAuthState() {
             auth.onAuthStateChanged(user => {
                 if (user) {
-                    // Fetch protected data only if logged in
                     salesUnsubscribe = db.collection('sales').onSnapshot(snapshot => {
                         sales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         renderAccounting();
@@ -415,9 +415,7 @@
                         renderAccounting();
                     });
                 } else {
-                    // Clear protected data and unsubscribe if logged out
-                    sales = [];
-                    expenses = [];
+                    sales = []; expenses = [];
                     if(salesUnsubscribe) salesUnsubscribe();
                     if(expensesUnsubscribe) expensesUnsubscribe();
                 }
@@ -437,7 +435,6 @@
             modal.classList.toggle('hidden');
             
             if (id === 'adminModal' && !modal.classList.contains('hidden')) {
-                // If user is already logged in, skip login form
                 if (auth.currentUser) {
                     document.getElementById('loginForm').classList.add('hidden');
                     document.getElementById('adminDashboard').classList.remove('hidden');
@@ -448,7 +445,6 @@
                     document.getElementById('loginForm').classList.remove('hidden');
                     document.getElementById('adminDashboard').classList.add('hidden');
                     document.getElementById('btnLogout').classList.add('hidden');
-                    document.getElementById('adminEmail').value = '';
                     document.getElementById('adminPassword').value = '';
                 }
             }
@@ -543,12 +539,12 @@
         }
 
         function handleLogin() {
-            const email = document.getElementById('adminEmail').value;
             const pass = document.getElementById('adminPassword').value;
+            const hiddenEmail = 'admin@aloriginal.com'; // الإيميل المخفي في الكود
             
-            if(!email || !pass) { showToast('يرجى إدخال الإيميل وكلمة المرور'); return; }
+            if(!pass) { showToast('يرجى إدخال الرقم السري'); return; }
             
-            auth.signInWithEmailAndPassword(email, pass)
+            auth.signInWithEmailAndPassword(hiddenEmail, pass)
                 .then((userCredential) => {
                     document.getElementById('loginForm').classList.add('hidden');
                     document.getElementById('adminDashboard').classList.remove('hidden');
@@ -565,7 +561,7 @@
                     showToast('تم تسجيل الدخول بنجاح');
                 })
                 .catch((error) => {
-                    showToast('بيانات الدخول غير صحيحة');
+                    showToast('الرقم السري غير صحيح');
                 });
         }
         
@@ -574,7 +570,6 @@
                 document.getElementById('loginForm').classList.remove('hidden');
                 document.getElementById('adminDashboard').classList.add('hidden');
                 document.getElementById('btnLogout').classList.add('hidden');
-                document.getElementById('adminEmail').value = '';
                 document.getElementById('adminPassword').value = '';
                 showToast('تم تسجيل الخروج بنجاح');
             });
