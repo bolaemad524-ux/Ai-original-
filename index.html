@@ -7,6 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; }
@@ -25,7 +29,7 @@
         .toast { background: #333; color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; animation: fadeInOut 3s forwards; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(-20px); } 10% { opacity: 1; transform: translateY(0); } 90% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-20px); } }
         
-        /* Splash Screen Animations */
+        /* Splash Screen */
         #splashScreen { position: fixed; inset: 0; z-index: 9999; background: linear-gradient(135deg, #1e3a8a, #3b82f6, #60a5fa); display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; transition: opacity 0.6s ease-out, visibility 0.6s; overflow: hidden; }
         .splash-text-ar { font-size: 2.2rem; font-weight: 900; animation: popIn 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; text-shadow: 0 4px 10px rgba(0,0,0,0.2); text-align: center; line-height: 1.2; }
         .splash-text-en { font-size: 1.1rem; font-weight: 600; opacity: 0.9; margin-top: 0.8rem; animation: slideUp 1s 0.4s ease-out both; letter-spacing: 1px; text-align: center; }
@@ -40,7 +44,6 @@
 </head>
 <body class="bg-gray-50 text-gray-800 pb-24 md:pb-0 select-none">
 
-    <!-- Splash Screen -->
     <div id="splashScreen">
         <div class="sparkles"></div>
         <div class="relative z-10 flex flex-col items-center px-4">
@@ -54,7 +57,6 @@
 
     <div id="toastContainer"></div>
 
-    <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-20">
         <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
             <div id="adminTrigger" class="flex items-center gap-2 cursor-pointer active:scale-95 transition select-none p-1" onclick="handleAdminTrigger()">
@@ -72,7 +74,6 @@
     </header>
 
     <main class="max-w-md mx-auto p-4 space-y-6">
-        <!-- Logo Section -->
         <section class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 text-center space-y-4 relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 to-blue-600"></div>
             <div class="relative mx-auto w-32 h-32 bg-gray-50 rounded-full flex items-center justify-center overflow-hidden border-[6px] border-white shadow-lg ring-1 ring-gray-100">
@@ -85,7 +86,6 @@
             </div>
         </section>
 
-        <!-- Deal Section -->
         <section id="dealSection" class="hidden relative overflow-hidden bg-gradient-to-br from-yellow-500 to-orange-600 rounded-3xl shadow-lg text-white">
             <div class="deal-shine"></div>
             <div class="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-4 py-1 rounded-bl-xl z-10 shadow-sm">🔥 عرض اليوم</div>
@@ -98,7 +98,6 @@
             </div>
         </section>
 
-        <!-- Search & Categories Section -->
         <section class="space-y-3">
             <div class="relative">
                 <i data-lucide="search" class="absolute right-4 top-3.5 w-5 h-5 text-gray-400"></i>
@@ -107,13 +106,11 @@
             <div class="flex overflow-x-auto gap-2 pb-2 scrollbar-hide px-1" id="userCategoriesList"></div>
         </section>
 
-        <!-- Products List -->
         <section class="space-y-4 min-h-[200px]">
             <h3 class="font-bold text-lg text-gray-800 px-2 flex items-center gap-2"><i data-lucide="grid" class="w-5 h-5 text-blue-600"></i> <span id="displayProductsTitle">أحدث المنتجات</span></h3>
             <div id="productsGrid" class="grid grid-cols-2 gap-3"></div>
         </section>
 
-        <!-- Cart Panel (Customer) -->
         <section id="cartPanel" class="hidden bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden ring-2 ring-blue-500 mb-6 transition-all fade-in-up">
             <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
                 <h3 class="font-bold text-gray-800 flex items-center gap-2"><i data-lucide="shopping-cart" class="w-5 h-5 text-blue-600"></i> الطلب الخاص بك</h3>
@@ -130,14 +127,11 @@
         </section>
     </main>
 
-    <!-- Floating Cart Button -->
     <div id="floatingCart" class="hidden fixed bottom-6 left-6 z-30 md:hidden">
         <button onclick="toggleCart(); window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })" class="bg-blue-600 text-white p-4 rounded-full shadow-2xl flex items-center gap-2 animate-bounce border-4 border-white"><i data-lucide="shopping-cart" class="w-6 h-6"></i><span class="font-bold"><span id="floatingTotal">0</span> ج</span></button>
     </div>
 
-    <!-- Contact Modal -->
     <div id="contactModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <!-- Content same as previous -->
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden fade-in-up">
             <div class="bg-gradient-to-l from-blue-500 to-blue-700 p-6 text-white text-center relative">
                 <button onclick="toggleModal('contactModal')" class="absolute top-4 right-4 bg-white/20 hover:bg-white/30 p-1 rounded-full text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -151,7 +145,6 @@
         </div>
     </div>
 
-    <!-- Admin Modal -->
     <div id="adminModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden relative fade-in-up">
             <div class="bg-gray-50 p-4 flex justify-between items-center border-b shrink-0 rounded-t-3xl">
@@ -166,8 +159,6 @@
                 </div>
                 
                 <div id="adminDashboard" class="hidden space-y-4">
-                    
-                    <!-- Admin Tabs Navigation -->
                     <div class="flex gap-2 bg-gray-100 p-1 rounded-xl overflow-x-auto scrollbar-hide">
                         <button onclick="switchAdminTab('inventory')" id="btnTabInventory" class="admin-tab-btn flex-1 whitespace-nowrap bg-white text-blue-600 font-bold px-4 py-2 rounded-lg shadow-sm text-sm transition">المخزن</button>
                         <button onclick="switchAdminTab('pos')" id="btnTabPos" class="admin-tab-btn flex-1 whitespace-nowrap text-gray-600 font-bold px-4 py-2 rounded-lg text-sm transition hover:bg-gray-200">قسم البيع</button>
@@ -175,9 +166,7 @@
                         <button onclick="switchAdminTab('settings')" id="btnTabSettings" class="admin-tab-btn flex-1 whitespace-nowrap text-gray-600 font-bold px-4 py-2 rounded-lg text-sm transition hover:bg-gray-200">الإعدادات</button>
                     </div>
 
-                    <!-- TAB 1: Inventory (المخزن) -->
                     <div id="tab-inventory" class="admin-tab space-y-4">
-                        <!-- Product Form -->
                         <div class="bg-gray-50 p-4 rounded-xl border space-y-3">
                             <h4 id="formHeader" class="font-bold text-sm text-gray-700 border-b pb-2 mb-2 flex items-center gap-2"><i data-lucide="plus-circle" class="w-4 h-4 text-green-600"></i> إضافة صنف للمخزن</h4>
                             
@@ -215,7 +204,6 @@
                             </div>
                         </div>
 
-                        <!-- Manage Inventory -->
                         <div class="bg-gray-50 p-4 rounded-xl border space-y-3">
                             <h4 class="font-bold text-sm text-gray-700 border-b pb-2 flex items-center justify-between">
                                 <span class="flex items-center gap-2"><i data-lucide="package" class="w-4 h-4 text-blue-600"></i> بضاعة المخزن</span>
@@ -225,7 +213,6 @@
                         </div>
                     </div>
 
-                    <!-- TAB 2: POS (قسم البيع) -->
                     <div id="tab-pos" class="admin-tab hidden space-y-4">
                         <div class="bg-blue-50 border border-blue-100 p-3 rounded-xl">
                             <h4 class="font-bold text-sm text-blue-800 mb-2">أضف للفاتورة</h4>
@@ -249,7 +236,6 @@
                             </div>
                         </div>
                         
-                        <!-- Hidden Invoice Area to Capture -->
                         <div id="invoicePreviewContainer" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
                             <div class="w-full max-w-sm flex flex-col items-center">
                                 <div id="invoiceCapture" class="invoice-print w-full relative">
@@ -279,7 +265,6 @@
                         </div>
                     </div>
 
-                    <!-- TAB 3: Accounting & Expenses (الحسابات والمصروفات) -->
                     <div id="tab-accounting" class="admin-tab hidden space-y-4">
                         <div class="grid grid-cols-2 gap-3">
                             <div class="bg-blue-600 text-white p-3 rounded-xl shadow">
@@ -300,7 +285,6 @@
                             </div>
                         </div>
 
-                        <!-- Expenses Form -->
                         <div class="bg-gray-50 p-3 rounded-xl border">
                             <h4 class="font-bold text-sm text-gray-700 border-b pb-2 mb-2">تسجيل مصروف جديد</h4>
                             <div class="flex gap-2">
@@ -312,9 +296,7 @@
                         </div>
                     </div>
 
-                    <!-- TAB 4: Settings (الإعدادات) - Keeping existing settings -->
                     <div id="tab-settings" class="admin-tab hidden space-y-4 bg-gray-50 p-4 rounded-xl border">
-                        <!-- إدارة الأقسام -->
                         <div class="bg-white p-2 rounded border space-y-2">
                             <h5 class="text-xs font-bold text-gray-500">إدارة الأقسام</h5>
                             <div class="flex gap-2">
@@ -323,8 +305,6 @@
                             </div>
                             <div id="adminCategoriesList" class="flex flex-wrap gap-2 mt-2"></div>
                         </div>
-
-                        <!-- هوية المتجر -->
                         <div class="bg-white p-2 rounded border space-y-2">
                             <h5 class="text-xs font-bold text-gray-500">هوية المتجر</h5>
                             <input id="settingStoreName" type="text" placeholder="اسم المتجر" class="w-full p-2 text-sm border rounded-lg mb-1">
@@ -336,15 +316,12 @@
                                 <input type="file" id="settingHeaderLogoInput" accept="image/*" class="hidden" onchange="handleHeaderLogoUpload(event)">
                             </div>
                         </div>
-
-                        <!-- التواصل -->
                         <div class="bg-white p-2 rounded border space-y-2">
-                            <h5 class="text-xs font-bold text-gray-500">التواصل</h5>
+                            <h5 class="text-xs font-bold text-gray-500">التواصل والحماية</h5>
                             <input id="linkWhatsapp" type="text" placeholder="رقم واتساب" class="w-full p-2 text-sm border rounded-lg text-left" dir="ltr">
                             <input id="linkPhone" type="text" placeholder="رقم الهاتف" class="w-full p-2 text-sm border rounded-lg text-left" dir="ltr">
-                            <input id="adminPinSetting" type="text" placeholder="الرقم السري" class="w-full p-2 text-sm border rounded-lg text-left" dir="ltr">
+                            <input id="adminPinSetting" type="text" placeholder="الرقم السري للإدارة" class="w-full p-2 text-sm border rounded-lg text-left" dir="ltr">
                         </div>
-
                         <button onclick="saveSettings()" class="w-full bg-gray-800 text-white py-3 rounded-xl text-sm font-bold">حفظ الإعدادات</button>
                     </div>
                 </div>
@@ -352,40 +329,37 @@
         </div>
     </div>
 
-    <!-- Modals (Info/Meter) untouched for customer side -->
-    <!-- ... -->
-
     <script>
-        // --- State ---
-        const STORE_PREFIX = 'aloriginal_store_';
-        let products = JSON.parse(localStorage.getItem(STORE_PREFIX + 'products')) || [];
-        let cart = JSON.parse(localStorage.getItem(STORE_PREFIX + 'cart')) || [];
+        // --- Firebase Configuration & Initialization ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSGSUiIEAmOHjZLBoF6sWENW_XuSLkpVU",
+            authDomain: "mohammed-apdo.firebaseapp.com",
+            projectId: "mohammed-apdo",
+            storageBucket: "mohammed-apdo.firebasestorage.app",
+            messagingSenderId: "605866837238",
+            appId: "1:605866837238:web:a780e6948a8cb6faed18d7"
+        };
         
-        // NEW STATE FOR POS & ACCOUNTING
-        let adminPosCart = [];
-        let sales = JSON.parse(localStorage.getItem(STORE_PREFIX + 'sales')) || [];
-        let expenses = JSON.parse(localStorage.getItem(STORE_PREFIX + 'expenses')) || [];
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        let settings = JSON.parse(localStorage.getItem(STORE_PREFIX + 'settings')) || { 
+        // --- Application State ---
+        let products = [];
+        let cart = JSON.parse(localStorage.getItem('aloriginal_local_cart')) || []; 
+        let adminPosCart = [];
+        let sales = [];
+        let expenses = [];
+        let settings = { 
             whatsapp: '201000000000', phone: '', facebook: '', pin: '1111',
             storeName: 'Al Original قطع غيار سيارات', storeDesc: 'متخصصين في هيونداي فيرنا',
-            productsTitle: 'أحدث المنتجات', storeLogo: '', headerLogo: '',
             categories: ['فلاتر وسيور', 'عفشة ومساعدين', 'فوانيس ولمبات', 'زيوت وتشحيم']
         };
         
         let tempBase64Image = '';
         let tempLogoBase64 = '';
         let tempHeaderLogoBase64 = '';
-        
         let currentSearchQuery = '';
         let currentCategory = '';
-
-        // Initialize Products with defaults if missing new keys (stock, buyPrice)
-        products = products.map(p => ({
-            ...p,
-            stock: p.stock || 0,
-            buyPrice: p.buyPrice || 0
-        }));
 
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
@@ -395,10 +369,43 @@
             }, 3000);
 
             lucide.createIcons();
-            if(!settings.categories) settings.categories = ['فلاتر وسيور', 'عفشة ومساعدين'];
-            renderUserCategories(); renderProducts(); updateCartUI(); applySettings();
+            initFirebaseListeners();
+            updateCartUI();
         });
 
+        // --- Firebase Data Listeners ---
+        function initFirebaseListeners() {
+            // Listen for Settings
+            db.collection('store_data').doc('settings').onSnapshot(doc => {
+                if (doc.exists) {
+                    settings = { ...settings, ...doc.data() };
+                    applySettings();
+                    renderUserCategories();
+                }
+            });
+
+            // Listen for Products
+            db.collection('products').onSnapshot(snapshot => {
+                products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProducts();
+                renderAdminInventory();
+                renderPosProductsList();
+            });
+
+            // Listen for Sales
+            db.collection('sales').onSnapshot(snapshot => {
+                sales = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderAccounting();
+            });
+
+            // Listen for Expenses
+            db.collection('expenses').onSnapshot(snapshot => {
+                expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderAccounting();
+            });
+        }
+
+        // --- UI Utils ---
         function showToast(message) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -417,8 +424,16 @@
         }
 
         // --- Customer View ---
-        function renderUserCategories() { /* ... */ }
-        function setCategory(cat) { currentCategory = cat; renderProducts(); }
+        function renderUserCategories() {
+            const list = document.getElementById('userCategoriesList');
+            list.innerHTML = `<button onclick="setCategory('')" class="${currentCategory === '' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200'} px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition transform active:scale-95"><i data-lucide="layers" class="w-4 h-4 inline-block mr-1"></i> الكل</button>`;
+            settings.categories.forEach(cat => {
+                list.innerHTML += `<button onclick="setCategory('${cat}')" class="${currentCategory === cat ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200'} px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition transform active:scale-95">${cat}</button>`;
+            });
+            lucide.createIcons();
+        }
+
+        function setCategory(cat) { currentCategory = cat; renderProducts(); renderUserCategories(); }
         function handleSearch() { currentSearchQuery = document.getElementById('searchInput').value.toLowerCase(); renderProducts(); }
         
         function renderProducts() {
@@ -435,7 +450,7 @@
                             <h4 class="font-bold text-sm text-gray-800 line-clamp-1 mb-1">${p.name}</h4>
                             <div class="flex justify-between items-center mt-2">
                                 <span class="font-bold text-blue-600">${p.price} ج</span>
-                                <button onclick="addToCart(${p.id})" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white p-2 rounded-xl"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                                <button onclick="addToCart('${p.id}')" class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white p-2 rounded-xl"><i data-lucide="plus" class="w-4 h-4"></i></button>
                             </div>
                         </div>
                     </div>`;
@@ -456,7 +471,7 @@
             saveCart();
         }
         function clearCart() { cart = []; saveCart(); }
-        function saveCart() { localStorage.setItem(STORE_PREFIX + 'cart', JSON.stringify(cart)); updateCartUI(); }
+        function saveCart() { localStorage.setItem('aloriginal_local_cart', JSON.stringify(cart)); updateCartUI(); }
         
         function updateCartUI() {
             const container = document.getElementById('cartItems'); container.innerHTML = '';
@@ -467,9 +482,9 @@
                     <div class="flex gap-2 bg-white p-2 rounded-xl border items-center mb-2">
                         <div class="flex-1"><h5 class="text-xs font-bold">${item.name}</h5><span class="text-blue-600 text-xs">${item.price * item.qty} ج</span></div>
                         <div class="flex items-center gap-1 bg-gray-50 rounded border">
-                            <button onclick="updateCartQty(${item.id}, 1)" class="w-6 h-6">+</button>
+                            <button onclick="updateCartQty('${item.id}', 1)" class="w-6 h-6">+</button>
                             <span class="text-xs font-bold w-6 text-center">${item.qty}</span>
-                            <button onclick="updateCartQty(${item.id}, -1)" class="w-6 h-6">-</button>
+                            <button onclick="updateCartQty('${item.id}', -1)" class="w-6 h-6">-</button>
                         </div>
                     </div>`;
             });
@@ -488,7 +503,7 @@
             window.open(`https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(text)}`, '_blank'); clearCart();
         }
 
-        // --- Admin Dashboard & Tabs ---
+        // --- Admin Dashboard ---
         let adminClicks = 0, adminTimer;
         function handleAdminTrigger() {
             adminClicks++;
@@ -502,8 +517,14 @@
                 document.getElementById('loginForm').classList.add('hidden');
                 document.getElementById('adminDashboard').classList.remove('hidden');
                 populateCategories(); 
-                switchAdminTab('inventory'); // default tab
-            } else { showToast('خطأ'); }
+                switchAdminTab('inventory');
+                
+                document.getElementById('linkWhatsapp').value = settings.whatsapp || '';
+                document.getElementById('linkPhone').value = settings.phone || '';
+                document.getElementById('adminPinSetting').value = settings.pin || '1111';
+                document.getElementById('settingStoreName').value = settings.storeName || '';
+                document.getElementById('settingStoreDesc').value = settings.storeDesc || '';
+            } else { showToast('كلمة المرور خاطئة'); }
         }
 
         function switchAdminTab(tabId) {
@@ -517,13 +538,9 @@
             const btn = document.getElementById(tabId === 'inventory' ? 'btnTabInventory' : tabId === 'pos' ? 'btnTabPos' : tabId === 'accounting' ? 'btnTabAccounting' : 'btnTabSettings');
             btn.classList.add('bg-white', 'text-blue-600', 'shadow-sm');
             btn.classList.remove('text-gray-600', 'hover:bg-gray-200');
-
-            if(tabId === 'inventory') renderAdminInventory();
-            if(tabId === 'pos') renderPosProductsList();
-            if(tabId === 'accounting') renderAccounting();
         }
 
-        // --- TAB 1: INVENTORY (المخزن) ---
+        // --- TAB 1: INVENTORY (المخزن - Firebase) ---
         function populateCategories() {
             const select = document.getElementById('prodCategory');
             select.innerHTML = '<option value="">بدون قسم</option>';
@@ -554,19 +571,17 @@
             
             if(!name || sellPrice <= 0) { showToast('أدخل الاسم وسعر البيع'); return; }
 
+            const prodData = { name, category, buyPrice, price: sellPrice, stock, image: tempBase64Image || 'https://via.placeholder.com/150' };
+
             if(id) {
-                const idx = products.findIndex(p => p.id == id);
-                if(idx > -1) {
-                    products[idx].name = name; products[idx].category = category;
-                    products[idx].buyPrice = buyPrice; products[idx].price = sellPrice;
-                    products[idx].stock = stock;
-                    if(tempBase64Image) products[idx].image = tempBase64Image;
-                }
+                db.collection('products').doc(id).update(prodData).then(() => {
+                    resetForm(); showToast('تم التحديث في Firebase');
+                });
             } else {
-                products.push({ id: Date.now(), name, category, buyPrice, price: sellPrice, stock, image: tempBase64Image || 'https://via.placeholder.com/150' });
+                db.collection('products').add(prodData).then(() => {
+                    resetForm(); showToast('تمت الإضافة إلى Firebase');
+                });
             }
-            localStorage.setItem(STORE_PREFIX + 'products', JSON.stringify(products));
-            resetForm(); renderAdminInventory(); renderProducts(); showToast('تم الحفظ');
         }
 
         function editProduct(id) {
@@ -589,17 +604,14 @@
             const p = products.find(x => x.id === id); if(!p) return;
             const qty = prompt(`كم عدد القطع التي تريد سحبها من ( ${p.name} )؟\nالمخزون الحالي: ${p.stock}`);
             if(qty !== null && !isNaN(qty) && qty > 0) {
-                p.stock -= parseFloat(qty);
-                localStorage.setItem(STORE_PREFIX + 'products', JSON.stringify(products));
-                renderAdminInventory(); showToast('تم سحب الكمية');
+                db.collection('products').doc(id).update({ stock: p.stock - parseFloat(qty) })
+                  .then(() => showToast('تم سحب الكمية من قاعدة البيانات'));
             }
         }
 
         function deleteProduct(id) {
-            if(confirm('متأكد من الحذف؟')) {
-                products = products.filter(x => x.id !== id);
-                localStorage.setItem(STORE_PREFIX + 'products', JSON.stringify(products));
-                renderAdminInventory(); renderProducts();
+            if(confirm('متأكد من الحذف نهائياً؟')) {
+                db.collection('products').doc(id).delete().then(() => showToast('تم الحذف'));
             }
         }
 
@@ -622,9 +634,9 @@
                         <div class="flex justify-between items-center mb-1">
                             <strong class="text-blue-800 line-clamp-1">${p.name}</strong>
                             <div class="flex gap-1">
-                                <button onclick="manualWithdraw(${p.id})" class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">سحب يدوي</button>
-                                <button onclick="editProduct(${p.id})" class="bg-blue-50 text-blue-600 px-2 py-1 rounded"><i data-lucide="edit-3" class="w-3 h-3"></i></button>
-                                <button onclick="deleteProduct(${p.id})" class="bg-red-50 text-red-600 px-2 py-1 rounded"><i data-lucide="trash" class="w-3 h-3"></i></button>
+                                <button onclick="manualWithdraw('${p.id}')" class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded">سحب يدوي</button>
+                                <button onclick="editProduct('${p.id}')" class="bg-blue-50 text-blue-600 px-2 py-1 rounded"><i data-lucide="edit-3" class="w-3 h-3"></i></button>
+                                <button onclick="deleteProduct('${p.id}')" class="bg-red-50 text-red-600 px-2 py-1 rounded"><i data-lucide="trash" class="w-3 h-3"></i></button>
                             </div>
                         </div>
                         <div class="flex justify-between text-gray-500 font-bold bg-gray-50 p-1 rounded">
@@ -646,7 +658,7 @@
             filtered.forEach(p => {
                 const stockColor = p.stock <= 0 ? 'text-red-500' : 'text-gray-500';
                 list.innerHTML += `
-                    <div onclick="addPosItem(${p.id})" class="bg-white p-2 rounded border cursor-pointer hover:border-blue-500 active:scale-95 transition text-xs">
+                    <div onclick="addPosItem('${p.id}')" class="bg-white p-2 rounded border cursor-pointer hover:border-blue-500 active:scale-95 transition text-xs">
                         <div class="font-bold text-gray-800 line-clamp-1">${p.name}</div>
                         <div class="flex justify-between mt-1">
                             <span class="text-green-600 font-bold">${p.price} ج</span>
@@ -680,9 +692,9 @@
                         <div class="flex items-center gap-2">
                             <span class="text-blue-600 font-bold">${item.price * item.qty} ج</span>
                             <div class="flex gap-1 bg-white border rounded">
-                                <button onclick="updatePosQty(${item.id}, 1)" class="px-2 text-gray-600">+</button>
+                                <button onclick="updatePosQty('${item.id}', 1)" class="px-2 text-gray-600">+</button>
                                 <span class="px-1 text-xs py-1">${item.qty}</span>
-                                <button onclick="updatePosQty(${item.id}, -1)" class="px-2 text-red-600">-</button>
+                                <button onclick="updatePosQty('${item.id}', -1)" class="px-2 text-red-600">-</button>
                             </div>
                         </div>
                     </div>`;
@@ -721,30 +733,31 @@
             
             let invTotal = 0;
             let invProfit = 0;
+            const batch = db.batch(); // Firebase batch write
             
-            // Deduct stock and calc profit
             adminPosCart.forEach(item => {
                 const prod = products.find(p => p.id === item.id);
                 if(prod) {
-                    prod.stock -= item.qty; // deduct stock
+                    const prodRef = db.collection('products').doc(item.id);
+                    batch.update(prodRef, { stock: prod.stock - item.qty });
                     invTotal += (item.price * item.qty);
                     invProfit += ((item.price - item.buyPrice) * item.qty);
                 }
             });
 
-            // Save sale record
-            sales.push({ id: Date.now(), date: new Date().toISOString(), total: invTotal, profit: invProfit });
-            
-            // Save updates
-            localStorage.setItem(STORE_PREFIX + 'products', JSON.stringify(products));
-            localStorage.setItem(STORE_PREFIX + 'sales', JSON.stringify(sales));
-            
-            adminPosCart = []; document.getElementById('customerName').value = '';
-            renderPosCart(); renderPosProductsList(); renderProducts(); renderAdminInventory();
-            showToast('تمت العملية وخصم المخزون بنجاح');
+            const saleRef = db.collection('sales').doc();
+            batch.set(saleRef, { date: new Date().toISOString(), total: invTotal, profit: invProfit });
+
+            batch.commit().then(() => {
+                adminPosCart = []; document.getElementById('customerName').value = '';
+                renderPosCart();
+                showToast('تمت العملية وحفظها بقاعدة البيانات');
+            }).catch(err => {
+                console.error(err); showToast('حدث خطأ أثناء الحفظ');
+            });
         }
 
-        // --- TAB 3: ACCOUNTING (الحسابات) ---
+        // --- TAB 3: ACCOUNTING (الحسابات - Firebase) ---
         function renderAccounting() {
             let totalSales = 0, grossProfit = 0, totalExp = 0;
             sales.forEach(s => { totalSales += s.total; grossProfit += s.profit; });
@@ -756,13 +769,13 @@
             document.getElementById('accNetProfit').innerText = (grossProfit - totalExp);
 
             const expList = document.getElementById('expensesList'); expList.innerHTML = '';
-            expenses.forEach((e, i) => {
+            expenses.forEach(e => {
                 expList.innerHTML += `
                     <div class="flex justify-between bg-white p-2 border rounded text-xs">
                         <span class="font-bold text-gray-700">${e.desc}</span>
                         <div class="flex gap-2 items-center">
                             <span class="text-red-600 font-bold">${e.amount} ج</span>
-                            <button onclick="deleteExpense(${i})" class="text-red-400"><i data-lucide="trash" class="w-3 h-3"></i></button>
+                            <button onclick="deleteExpense('${e.id}')" class="text-red-400"><i data-lucide="trash" class="w-3 h-3"></i></button>
                         </div>
                     </div>`;
             });
@@ -773,23 +786,99 @@
             const desc = document.getElementById('expenseDesc').value;
             const amt = parseFloat(document.getElementById('expenseAmount').value);
             if(desc && amt > 0) {
-                expenses.push({ id: Date.now(), desc, amount: amt });
-                localStorage.setItem(STORE_PREFIX + 'expenses', JSON.stringify(expenses));
-                document.getElementById('expenseDesc').value = ''; document.getElementById('expenseAmount').value = '';
-                renderAccounting(); showToast('تمت إضافة المصروف');
+                db.collection('expenses').add({ desc, amount: amt, date: new Date().toISOString() })
+                  .then(() => {
+                      document.getElementById('expenseDesc').value = ''; document.getElementById('expenseAmount').value = '';
+                      showToast('تمت إضافة المصروف لـ Firebase');
+                  });
             }
         }
-        function deleteExpense(idx) {
+        function deleteExpense(id) {
             if(confirm('حذف هذا المصروف؟')) {
-                expenses.splice(idx, 1); localStorage.setItem(STORE_PREFIX + 'expenses', JSON.stringify(expenses));
-                renderAccounting();
+                db.collection('expenses').doc(id).delete().then(() => showToast('تم الحذف'));
             }
         }
 
-        // --- TAB 4: SETTINGS ---
-        function applySettings() { /* Simplified apply logic based on existing settings */ }
-        function saveSettings() { /* Save settings logic here */ }
-        
+        // --- TAB 4: SETTINGS (Firebase) ---
+        function addCategory() {
+            const val = document.getElementById('newCategoryName').value.trim();
+            if(val && !settings.categories.includes(val)) {
+                const updatedCategories = [...settings.categories, val];
+                db.collection('store_data').doc('settings').set({ categories: updatedCategories }, { merge: true })
+                  .then(() => {
+                      document.getElementById('newCategoryName').value = '';
+                      showToast('تم إضافة القسم');
+                  });
+            }
+        }
+
+        function renderAdminCategories() {
+            const list = document.getElementById('adminCategoriesList'); list.innerHTML = '';
+            settings.categories.forEach((cat, index) => {
+                list.innerHTML += `<div class="bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-2 border">${cat}<button onclick="deleteCategory(${index})" class="text-red-500 hover:text-red-700"><i data-lucide="x" class="w-3 h-3"></i></button></div>`;
+            });
+            lucide.createIcons();
+        }
+
+        function deleteCategory(index) {
+            if(confirm('هل تريد مسح هذا القسم؟')) {
+                const updatedCategories = [...settings.categories];
+                updatedCategories.splice(index, 1);
+                db.collection('store_data').doc('settings').set({ categories: updatedCategories }, { merge: true })
+                  .then(() => showToast('تم حذف القسم'));
+            }
+        }
+
+        function handleLogoUpload(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = e => { tempLogoBase64 = e.target.result; showToast('تم اختيار اللوجو (اضغط حفظ)'); };
+                reader.readAsDataURL(file);
+            }
+        }
+        function handleHeaderLogoUpload(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = e => { tempHeaderLogoBase64 = e.target.result; showToast('تم اختيار اللوجو العلوي (اضغط حفظ)'); };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveSettings() {
+            const updatedSettings = {
+                whatsapp: document.getElementById('linkWhatsapp').value,
+                phone: document.getElementById('linkPhone').value,
+                pin: document.getElementById('adminPinSetting').value || '1111',
+                storeName: document.getElementById('settingStoreName').value || 'Al Original',
+                storeDesc: document.getElementById('settingStoreDesc').value || '',
+                categories: settings.categories
+            };
+            if (tempLogoBase64) updatedSettings.storeLogo = tempLogoBase64;
+            if (tempHeaderLogoBase64) updatedSettings.headerLogo = tempHeaderLogoBase64;
+
+            db.collection('store_data').doc('settings').set(updatedSettings, { merge: true })
+              .then(() => showToast('تم حفظ الإعدادات في Firebase'));
+        }
+
+        function applySettings() {
+            document.getElementById('btnPhone').href = settings.phone ? `tel:${settings.phone}` : '#';
+            document.getElementById('btnWhatsapp').href = settings.whatsapp ? `https://wa.me/${settings.whatsapp.replace(/[^0-9]/g, '')}` : '#';
+            
+            document.getElementById('headerStoreName').innerText = settings.storeName || 'Al Original قطع غيار سيارات';
+            document.getElementById('heroStoreName').innerText = settings.storeName || 'Al Original قطع غيار سيارات';
+            document.getElementById('heroStoreDesc').innerText = settings.storeDesc || '';
+            
+            const mainLogo = document.getElementById('mainLogo'), defaultLogoIcon = document.getElementById('defaultLogoIcon');
+            if(settings.storeLogo) { mainLogo.src = settings.storeLogo; mainLogo.classList.remove('hidden'); defaultLogoIcon.classList.add('hidden'); } 
+            
+            const headerCustomLogo = document.getElementById('headerCustomLogo'), headerDefaultIcon = document.getElementById('headerDefaultIcon');
+            if(settings.headerLogo) { headerCustomLogo.src = settings.headerLogo; headerCustomLogo.classList.remove('hidden'); headerDefaultIcon.classList.add('hidden'); } 
+            
+            renderAdminCategories();
+            populateCategories();
+        }
     </script>
 </body>
 </html>
