@@ -2,21 +2,61 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>متجر Al Original</title>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Al Original | قطع غيار سيارات</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 p-4">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
-    <div id="app" class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-lg">
-        <h1 class="text-2xl font-bold text-center mb-4">متجر Al Original</h1>
-        <div id="content">جاري التحميل...</div>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #f1f1f1; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        .toast { background: #333; color: white; padding: 10px 20px; border-radius: 8px; font-size: 14px; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; }
+    </style>
+</head>
+<body class="bg-gray-50 pb-24">
+
+    <div id="toastContainer"></div>
+
+    <header class="bg-white shadow-sm sticky top-0 z-20">
+        <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+            <div id="adminTrigger" class="cursor-pointer font-bold text-lg text-blue-900" onclick="handleAdminTrigger()">Al Original</div>
+            <button onclick="toggleCart()" class="p-2 bg-gray-100 rounded-full"><i data-lucide="shopping-cart"></i></button>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto p-4 space-y-6">
+        <section id="productsGrid" class="grid grid-cols-2 gap-3"></section>
+    </main>
+
+    <div id="adminModal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            <div id="loginForm" class="space-y-4">
+                <input type="password" id="adminPassword" class="w-full p-4 border rounded-xl" placeholder="الرقم السري للإدارة">
+                <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-3 rounded-xl">دخول</button>
+            </div>
+            
+            <div id="adminDashboard" class="hidden space-y-4">
+                <h3 class="font-bold border-b pb-2">لوحة الإدارة</h3>
+                <input type="text" id="prodName" placeholder="اسم القطعة" class="w-full p-2 border rounded">
+                <input type="number" id="prodPrice" placeholder="السعر" class="w-full p-2 border rounded">
+                <input type="file" id="prodImageInput" class="hidden" onchange="handleImageUpload(event)">
+                <button onclick="document.getElementById('prodImageInput').click()" class="bg-gray-200 p-2 rounded">اختيار صورة</button>
+                <button onclick="saveProduct()" class="w-full bg-green-600 text-white py-3 rounded-xl">حفظ الصنف</button>
+                <button onclick="location.reload()" class="w-full text-red-500">خروج</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // إعدادات Firebase الخاصة بك
         const firebaseConfig = {
             apiKey: "AIzaSyBSGSUiIEAmOHjZLBoF6sWENW_XuSLkpVU",
             authDomain: "mohammed-apdo.firebaseapp.com",
@@ -25,20 +65,61 @@
             messagingSenderId: "605866837238",
             appId: "1:605866837238:web:a780e6948a8cb6faed18d7"
         };
-
-        // الربط
+        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
+        
+        let tempBase64Image = '';
 
-        // تجربة سريعة للتحقق من الربط
-        db.collection("test").doc("connection").set({
-            status: "connected",
-            timestamp: new Date()
-        }).then(() => {
-            document.getElementById('content').innerHTML = "تم الربط مع Firebase بنجاح! 🎉";
-        }).catch((error) => {
-            document.getElementById('content').innerHTML = "خطأ في الربط: " + error.message;
+        // دالة ضغط الصور
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 400; canvas.height = 400;
+                    canvas.getContext('2d').drawImage(img, 0, 0, 400, 400);
+                    callback(canvas.toDataURL('image/jpeg', 0.5));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleImageUpload(e) {
+            if(e.target.files[0]) compressImage(e.target.files[0], (base64) => { tempBase64Image = base64; });
+        }
+
+        function saveProduct() {
+            const name = document.getElementById('prodName').value;
+            const price = document.getElementById('prodPrice').value;
+            db.collection('products').add({ name, price, image: tempBase64Image }).then(() => {
+                alert('تم الحفظ!'); location.reload();
+            });
+        }
+
+        function handleLogin() {
+            const pass = document.getElementById('adminPassword').value;
+            auth.signInWithEmailAndPassword('admin@aloriginal.com', pass).then(() => {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.remove('hidden');
+            }).catch(() => alert('الرقم السري خطأ'));
+        }
+
+        let clicks = 0;
+        function handleAdminTrigger() {
+            clicks++; if(clicks === 3) { document.getElementById('adminModal').classList.remove('hidden'); clicks = 0; }
+        }
+
+        // تحميل المنتجات
+        db.collection('products').onSnapshot(snap => {
+            const grid = document.getElementById('productsGrid'); grid.innerHTML = '';
+            snap.forEach(doc => {
+                const p = doc.data();
+                grid.innerHTML += `<div class="bg-white p-2 rounded-xl"><img src="${p.image}" class="h-32 w-full object-cover rounded-lg"><h4 class="font-bold">${p.name}</h4><p class="text-blue-600">${p.price} ج</p></div>`;
+            });
         });
     </script>
 </body>
